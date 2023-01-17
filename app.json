@@ -7,7 +7,7 @@
   "repository": "https://github.com/aahnik/tgcf",
   "logo": "https://user-images.githubusercontent.com/66209958/115183360-3fa4d500-a0f9-11eb-9c0f-c5ed03a9ae17.png",
   "env": {
-    "PASSWORD": {
+    "PASSWORD": "mormaso"
       "description": "The password to protect the web interface",
       "value": "",
       "required": true

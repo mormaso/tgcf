@@ -3,7 +3,7 @@
 import logging
 import os
 import sys
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, validator  # pylint: disable=no-name-in-module
@@ -81,6 +81,7 @@ class Config(BaseModel):
 
     # pylint: disable=too-few-public-
     pid: int = 0
+    theme: str = "light"
     login: LoginConfig = LoginConfig()
     admins: List[Union[int, str]] = []
     forwards: List[Forward] = []
@@ -192,7 +193,7 @@ async def load_from_to(
         if not forward.use_this:
             continue
         source = forward.source
-        if type(source) != int and source.strip() == "":
+        if not isinstance(source, int) and source.strip() == "":
             continue
         src = await _(forward.source)
         from_to_dict[src] = [await _(dest) for dest in forward.dest]
@@ -205,19 +206,6 @@ async def load_admins(client: TelegramClient):
         ADMINS.append(await get_id(client, admin))
     logging.info(f"Loaded admins are {ADMINS}")
     return ADMINS
-
-
-def get_SESSION():
-    if CONFIG.login.SESSION_STRING and CONFIG.login.user_type == 1:
-        logging.info("using session string")
-        SESSION = StringSession(CONFIG.login.SESSION_STRING)
-    elif CONFIG.login.BOT_TOKEN and CONFIG.login.user_type == 0:
-        logging.info("using bot account")
-        SESSION = "tgcf_bot"
-    else:
-        logging.warning("Login information not set!")
-        sys.exit()
-    return SESSION
 
 
 def setup_mongo(client):
@@ -257,3 +245,16 @@ if PASSWORD == "tgcf":
 from_to = {}
 is_bot: Optional[bool] = None
 logging.info("config.py got executed")
+
+
+def get_SESSION(section: Any = CONFIG.login, default: str = 'tgcf_bot'):
+    if section.SESSION_STRING and section.user_type == 1:
+        logging.info("using session string")
+        SESSION = StringSession(section.SESSION_STRING)
+    elif section.BOT_TOKEN and section.user_type == 0:
+        logging.info("using bot account")
+        SESSION = default
+    else:
+        logging.warning("Login information not set!")
+        sys.exit()
+    return SESSION

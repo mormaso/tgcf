@@ -6,7 +6,7 @@ import yaml
 from tgcf.config import CONFIG, read_config, write_config
 from tgcf.plugin_models import FileType, Replace, Style
 from tgcf.web_ui.password import check_password
-from tgcf.web_ui.utils import get_list, get_string, hide_st
+from tgcf.web_ui.utils import get_list, get_string, hide_st, switch_theme
 
 CONFIG = read_config()
 
@@ -16,6 +16,7 @@ st.set_page_config(
 )
 
 hide_st(st)
+switch_theme(st,CONFIG)
 if check_password(st):
 
     with st.expander("Filter"):
@@ -161,6 +162,49 @@ if check_password(st):
         st.write(
             "You can have blank lines inside header and footer, to make space between the orignal message and captions."
         )
+
+    with st.expander("Sender"):
+        st.write("Modify the sender of forwarded messages other than the current user/bot")
+        st.warning("Show 'Forwarded from' option must be disabled or else messages will not be sent",icon="⚠️")
+        CONFIG.plugins.sender.check = st.checkbox(
+            "Set sender to:", value=CONFIG.plugins.sender.check
+        )
+        leftpad,content,rightpad = st.columns([0.05,0.9,0.05])
+        with content:
+            user_type = st.radio("Account Type", ["Bot", "User"], index=CONFIG.plugins.sender.user_type,horizontal=True)
+            if user_type == "Bot":
+                CONFIG.plugins.sender.user_type = 0
+                CONFIG.plugins.sender.BOT_TOKEN = st.text_input(
+                    "Bot Token", value=CONFIG.plugins.sender.BOT_TOKEN, type="password"
+                )
+            else:
+                CONFIG.plugins.sender.user_type = 1
+                CONFIG.plugins.sender.SESSION_STRING = st.text_input(
+                    "Session String", CONFIG.plugins.sender.SESSION_STRING, type="password"
+                )
+                st.markdown(
+                """
+                ###### How to get session string?
+
+                Link to repl: https://replit.com/@aahnik/tg-login?v=1
+                
+                <p style="line-height:0px;margin-bottom:2em">
+                    <i>Click on the above link and enter api id, api hash, and phone no to generate session string.</i>
+                </p>
+                
+                
+                > <small>**Note from developer:**<small>
+                >
+                > <small>Due some issues logging in with a user account using a phone no is not supported in this web interface.</small>
+                >
+                > <small>I have built a command-line program named tg-login (https://github.com/aahnik/tg-login) that can generate the session string for you.</small>
+                >
+                > <small>You can run tg-login on your computer, or securely in this repl. tg-login is open source, and you can also inspect the bash script running in the repl.</small>
+                >
+                > <small>What is a session string?</small>
+                > <small>https://docs.telethon.dev/en/stable/concepts/sessions.html#string-sessions</small>
+                """
+                ,unsafe_allow_html=True)
 
     if st.button("Save"):
         write_config(CONFIG)
